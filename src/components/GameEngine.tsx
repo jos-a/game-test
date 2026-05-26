@@ -1,14 +1,13 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { Character } from '@/types/game';
-import { useGameStore } from '@/hooks/useGameStore';
+import { Character } from '../types/game';
 
 interface GameEngineProps {
   player1: Character;
   player2: Character;
   gameMode: 'cpu' | '2player';
-  onUpdatePlayers: (p1: Character, p2: Character) =&gt; void;
-  onGameOver: (winner: 'player1' | 'player2') =&gt; void;
+  onUpdatePlayers: (p1: Character, p2: Character) => void;
+  onGameOver: (winner: 'player1' | 'player2') => void;
 }
 
 const CANVAS_WIDTH = 900;
@@ -18,65 +17,56 @@ const GRAVITY = 0.8;
 const JUMP_FORCE = -15;
 const MOVE_SPEED = 5;
 
-export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
+export const GameEngine: React.FC<GameEngineProps> = ({
   player1,
   player2,
   gameMode,
   onUpdatePlayers,
   onGameOver,
-}) =&gt; {
-  const canvasRef = useRef&lt;HTMLCanvasElement&gt;(null);
-  const keysRef = useRef&lt;Record&lt;string, boolean&gt;&gt;({});
-  const gameLoopRef = useRef&lt;number&gt;();
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const keysRef = useRef<Record<string, boolean>>({});
+  const gameLoopRef = useRef<number>();
   const p1Ref = useRef(player1);
   const p2Ref = useRef(player2);
 
-  useEffect(() =&gt; {
+  useEffect(() => {
     p1Ref.current = player1;
     p2Ref.current = player2;
   }, [player1, player2]);
 
-  useEffect(() =&gt; {
-    const handleKeyDown = (e: KeyboardEvent) =&gt; {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.key.toLowerCase()] = true;
     };
-    const handleKeyUp = (e: KeyboardEvent) =&gt; {
+    const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current[e.key.toLowerCase()] = false;
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    return () =&gt; {
+    return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
-
-  const checkCollision = (a: Character, b: Character): boolean =&gt; {
-    return (
-      a.x &lt; b.x + b.width &amp;&amp;
-      a.x + a.width &gt; b.x &amp;&amp;
-      a.y &lt; b.y + b.height &amp;&amp;
-      a.y + a.height &gt; b.y
-    );
-  };
 
   const updateCharacter = (
     char: Character,
     keys: { left: string; right: string; jump: string; attack: string },
     isCPU = false,
     opponent?: Character
-  ): Character =&gt; {
+  ): Character => {
     const newChar = { ...char };
 
-    if (newChar.attackCooldown &gt; 0) {
+    if (newChar.attackCooldown > 0) {
       newChar.attackCooldown--;
     }
 
-    if (isCPU &amp;&amp; opponent) {
+    if (isCPU && opponent) {
       const dist = opponent.x - newChar.x;
-      if (Math.abs(dist) &gt; 100) {
-        if (dist &gt; 0) {
+      if (Math.abs(dist) > 100) {
+        if (dist > 0) {
           newChar.velocityX = MOVE_SPEED * 0.7;
           newChar.direction = 'right';
         } else {
@@ -85,12 +75,12 @@ export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
         }
       } else {
         newChar.velocityX = 0;
-        if (newChar.attackCooldown === 0 &amp;&amp; Math.random() &lt; 0.02) {
+        if (newChar.attackCooldown === 0 && Math.random() < 0.02) {
           newChar.isAttacking = true;
           newChar.attackCooldown = 30;
         }
       }
-      if (!newChar.isJumping &amp;&amp; Math.random() &lt; 0.01) {
+      if (!newChar.isJumping && Math.random() < 0.01) {
         newChar.velocityY = JUMP_FORCE;
         newChar.isJumping = true;
       }
@@ -105,12 +95,12 @@ export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
         newChar.velocityX = 0;
       }
 
-      if (keysRef.current[keys.jump] &amp;&amp; !newChar.isJumping) {
+      if (keysRef.current[keys.jump] && !newChar.isJumping) {
         newChar.velocityY = JUMP_FORCE;
         newChar.isJumping = true;
       }
 
-      if (keysRef.current[keys.attack] &amp;&amp; newChar.attackCooldown === 0) {
+      if (keysRef.current[keys.attack] && newChar.attackCooldown === 0) {
         newChar.isAttacking = true;
         newChar.attackCooldown = 20;
       }
@@ -120,23 +110,23 @@ export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
     newChar.x += newChar.velocityX;
     newChar.y += newChar.velocityY;
 
-    if (newChar.x &lt; 0) newChar.x = 0;
-    if (newChar.x + newChar.width &gt; CANVAS_WIDTH) newChar.x = CANVAS_WIDTH - newChar.width;
+    if (newChar.x < 0) newChar.x = 0;
+    if (newChar.x + newChar.width > CANVAS_WIDTH) newChar.x = CANVAS_WIDTH - newChar.width;
 
-    if (newChar.y &gt;= GROUND_Y - newChar.height) {
+    if (newChar.y >= GROUND_Y - newChar.height) {
       newChar.y = GROUND_Y - newChar.height;
       newChar.velocityY = 0;
       newChar.isJumping = false;
     }
 
-    if (newChar.attackCooldown &lt; 15) {
+    if (newChar.attackCooldown < 15) {
       newChar.isAttacking = false;
     }
 
     return newChar;
   };
 
-  const handleAttack = (attacker: Character, defender: Character): Character =&gt; {
+  const handleAttack = (attacker: Character, defender: Character): Character => {
     if (!attacker.isAttacking) return defender;
 
     const attackBox = {
@@ -147,19 +137,19 @@ export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
     };
 
     const hit = (
-      attackBox.x &lt; defender.x + defender.width &amp;&amp;
-      attackBox.x + attackBox.width &gt; defender.x &amp;&amp;
-      attackBox.y &lt; defender.y + defender.height &amp;&amp;
-      attackBox.y + attackBox.height &gt; defender.y
+      attackBox.x < defender.x + defender.width &&
+      attackBox.x + attackBox.width > defender.x &&
+      attackBox.y < defender.y + defender.height &&
+      attackBox.y + attackBox.height > defender.y
     );
 
-    if (hit &amp;&amp; attacker.attackCooldown === 18) {
+    if (hit && attacker.attackCooldown === 18) {
       return { ...defender, health: Math.max(0, defender.health - attacker.attackPower) };
     }
     return defender;
   };
 
-  const drawCharacter = (ctx: CanvasRenderingContext2D, char: Character) =&gt; {
+  const drawCharacter = (ctx: CanvasRenderingContext2D, char: Character) => {
     ctx.save();
     
     if (char.direction === 'left') {
@@ -193,7 +183,7 @@ export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
     ctx.restore();
   };
 
-  const gameLoop = () =&gt; {
+  const gameLoop = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -239,11 +229,11 @@ export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
     p2Ref.current = newP2;
     onUpdatePlayers(newP1, newP2);
 
-    if (newP1.health &lt;= 0) {
+    if (newP1.health <= 0) {
       onGameOver('player2');
       return;
     }
-    if (newP2.health &lt;= 0) {
+    if (newP2.health <= 0) {
       onGameOver('player1');
       return;
     }
@@ -251,9 +241,9 @@ export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
     gameLoopRef.current = requestAnimationFrame(gameLoop);
   };
 
-  useEffect(() =&gt; {
+  useEffect(() => {
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-    return () =&gt; {
+    return () => {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
       }
@@ -261,12 +251,12 @@ export const GameEngine: React.FC&lt;GameEngineProps&gt; = ({
   }, []);
 
   return (
-    &lt;canvas
+    <canvas
       ref={canvasRef}
       width={CANVAS_WIDTH}
       height={CANVAS_HEIGHT}
       className="border-4 border-cyan-400 rounded-lg shadow-2xl"
       style={{ boxShadow: '0 0 30px rgba(0, 217, 255, 0.5)' }}
-    /&gt;
+    />
   );
 };
