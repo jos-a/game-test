@@ -3,22 +3,31 @@ import { useState, useEffect } from 'react';
 import { GameEngine } from '../components/GameEngine';
 import { HealthBar } from '../components/HealthBar';
 import { useGameStore } from '../hooks/useGameStore';
+import { useAudio } from '../hooks/useAudio';
 import { Character } from '../types/game';
 
 export const GamePage: React.FC = () => {
-  const { 
-    player1, 
-    player2, 
-    gameMode, 
-    setWinner, 
-    winner, 
+  const {
+    player1,
+    player2,
+    gameMode,
+    setWinner,
+    winner,
     phase,
     resetGame,
-    setPhase 
+    setPhase
   } = useGameStore();
-  
+
+  const { playSound } = useAudio();
+
   const [localPlayer1, setLocalPlayer1] = useState<Character | null>(player1);
   const [localPlayer2, setLocalPlayer2] = useState<Character | null>(player2);
+
+  useEffect(() => {
+    if (phase === 'gameOver') {
+      playSound('end');
+    }
+  }, [phase, playSound]);
 
   useEffect(() => {
     if (player1) setLocalPlayer1(player1);
@@ -33,25 +42,31 @@ export const GamePage: React.FC = () => {
   if (phase === 'gameOver' && winner) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1a2e] to-[#0f0f23]">
-        <h1 
+        <h1
           className="text-5xl font-bold mb-8"
-          style={{ 
+          style={{
             color: winner === 'player1' ? '#00d9ff' : '#e94560',
             textShadow: `0 0 30px ${winner === 'player1' ? '#00d9ff' : '#e94560'}`,
           }}
         >
           {winner === 'player1' ? 'Player 1' : gameMode === '2player' ? 'Player 2' : 'CPU'} WINS!
         </h1>
-        
+
         <div className="flex gap-4">
           <button
-            onClick={() => setPhase('menu')}
+            onClick={() => {
+              playSound('cancel');
+              setPhase('menu');
+            }}
             className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all"
           >
             MAIN MENU
           </button>
           <button
-            onClick={resetGame}
+            onClick={() => {
+              playSound('ok');
+              resetGame();
+            }}
             className="px-8 py-3 bg-gradient-to-r from-[#e94560] to-[#00d9ff] text-white font-bold rounded-lg hover:scale-110 transition-all duration-300 shadow-lg"
           >
             PLAY AGAIN
@@ -66,12 +81,15 @@ export const GamePage: React.FC = () => {
       <div className="w-full max-w-4xl flex justify-between items-start mb-4">
         {localPlayer1 && <HealthBar character={localPlayer1} playerNumber={1} />}
         <button
-          onClick={() => setPhase('menu')}
+          onClick={() => {
+            playSound('cancel');
+            setPhase('menu');
+          }}
           className="px-4 py-2 bg-gray-700/80 text-white rounded-lg hover:bg-gray-600 transition-all text-sm"
         >
           EXIT GAME
         </button>
-        {localPlayer2 && <HealthBar character={localPlayer2} playerNumber={gameMode === '2player' ? 2 : 2} />}
+        {localPlayer2 && <HealthBar character={localPlayer2} playerNumber={2} />}
       </div>
 
       {player1 && player2 && (
@@ -84,9 +102,9 @@ export const GamePage: React.FC = () => {
         />
       )}
 
-      <div className="mt-4 text-gray-500 text-xs text-center">
-        <p>Player 1: W/A/D to move | F to attack</p>
-        {gameMode === '2player' && <p>Player 2: Arrow keys to move | J to attack</p>}
+      <div className="mt-4 text-gray-500 text-sm text-center">
+        <p>Player 1: W/A/D to move | F to attack | G to block</p>
+        {gameMode === '2player' && <p>Player 2: Arrow keys to move | J to attack | K to block</p>}
       </div>
     </div>
   );

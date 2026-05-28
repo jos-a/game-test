@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Project-specific
+html5-lf2/
+CODE_FILES.md
+PROJECT_STRUCTURE.md
+TODAY_SUMMARY.md
+src/audio/
+
+# Trae specific
+.trae/
+.agents/
+skills-lock.json
